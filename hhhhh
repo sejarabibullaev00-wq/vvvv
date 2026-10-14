@@ -1,0 +1,103 @@
+
+USE [ВашаБазаДанных]; -- ЗАМЕНИТЕ на имя вашей базы
+GO
+
+
+
+PRINT '--- ТЕСТ 1: Проверка наличия данных в таблицах ---';
+
+SELECT 
+    t.name AS TableName,
+    SUM(p.rows) AS RowCounts
+FROM sys.tables t
+JOIN sys.partitions p ON t.object_id = p.object_id
+WHERE p.index_id IN (0, 1)
+GROUP BY t.name
+HAVING SUM(p.rows) = 0; 
+-- Если запрос вернул строки - значит в этих таблицах НЕТ данных
+
+
+PRINT '--- ТЕСТ 2: Проверка на дубликаты (пример для таблицы Users) ---';
+-- ЗАМЕНИТЕ Users и UserID на ваши реальные таблицу и колонку
+
+SELECT 
+    UserID, 
+    COUNT(*) AS DuplicateCount
+FROM Users
+GROUP BY UserID
+HAVING COUNT(*) > 1;
+
+
+
+
+
+PRINT '--- ТЕСТ 3: Проверка вычисляемых столбцов ---';
+
+SELECT TOP 10
+    *,
+  
+FROM OrderDetails;
+
+
+
+
+PRINT '--- ПРОВЕРКА: Таблицы и их файловые группы ---';
+
+SELECT 
+    t.name AS TableName,
+    fg.name AS FileGroupName
+FROM sys.tables t
+JOIN sys.indexes i ON t.object_id = i.object_id
+JOIN sys.filegroups fg ON i.data_space_id = fg.data_space_id
+WHERE i.index_id <= 1
+ORDER BY t.name;
+
+
+
+
+
+PRINT '--- ПРОВЕРКА: Все индексы в базе ---';
+
+SELECT 
+    t.name AS TableName,
+    i.name AS IndexName,
+    i.type_desc AS IndexType,
+    i.is_unique AS IsUnique
+FROM sys.indexes i
+JOIN sys.tables t ON i.object_id = t.object_id
+WHERE i.name IS NOT NULL
+ORDER BY t.name;
+
+
+
+-- Отчеты смотреть в SSMS вручную:
+-- ПКМ на базе -> Reports -> Standard Reports:
+--   1. Disk Usage
+--   2. Index Usage Statistics
+--   3. All Indexes
+--   4. Table and Index Size
+
+
+
+
+PRINT '--- ПРОВЕРКА: Процедуры, функции, триггеры ---';
+
+SELECT 
+    name AS ObjectName,
+    type_desc AS ObjectType,
+    create_date AS CreatedDate,
+    modify_date AS ModifiedDate
+FROM sys.objects
+WHERE type IN ('P', 'FN', 'IF', 'TF', 'TR', 'V')
+ORDER BY type_desc, name;
+
+
+
+/*
+git init
+git add .
+git commit -m "Урок 23. Подготовка к зачету: тесты, индексы, файловые группы"
+git remote add origin https://github.com/ВАШ_ЛОГИН/ВАШ_РЕПОЗИТОРИЙ.git
+git branch -M main
+git push -u origin main
+*/
